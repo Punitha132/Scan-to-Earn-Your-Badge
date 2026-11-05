@@ -1,0 +1,311 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Scan to Earn Your Badge</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;min-height:100vh;padding:20px;
+ display:flex;justify-content:center;align-items:center;
+ font-family:Arial,sans-serif;
+ background:linear-gradient(135deg,#101827,#263c58);
+ color:white;text-align:center
+}
+.card{
+ width:100%;max-width:580px;padding:30px 22px;
+ background:#ffffff12;border:1px solid #ffffff30;
+ border-radius:22px;box-shadow:0 15px 40px #0005
+}
+h1{color:#ffd166;font-size:29px}
+p{color:#d5deeb;line-height:1.6}
+button{
+ padding:13px 23px;border:0;border-radius:30px;
+ background:#ffd166;color:#172235;font-weight:bold;
+ font-size:16px;cursor:pointer;margin:8px
+}
+button:hover{transform:scale(1.04)}
+.option{
+ display:block;width:100%;margin:12px 0;padding:15px;
+ border:1px solid #ffffff50;border-radius:12px;
+ background:#ffffff12;color:white;text-align:left;
+ font-size:15px
+}
+.option:disabled{cursor:default;opacity:1}
+.correct{background:#176b45!important;border-color:#55e6a0!important}
+.wrong{background:#8b3030!important;border-color:#ff8888!important}
+#feedback{min-height:55px;font-weight:bold}
+#progress{color:#ffd166}
+.badge{
+ font-size:75px;margin:20px auto;
+ animation:pop .7s ease
+}
+@keyframes pop{
+ 0%{transform:scale(.2);opacity:0}
+ 75%{transform:scale(1.2)}
+ 100%{transform:scale(1);opacity:1}
+}
+.gold{color:#ffd166;text-shadow:0 0 25px #ffd166}
+.silver{color:#dce5f0;text-shadow:0 0 20px #dce5f0}
+.bronze{color:#d99a65;text-shadow:0 0 20px #d99a65}
+.shake{animation:shake .35s}
+@keyframes shake{
+ 0%,100%{transform:translateX(0)}
+ 25%{transform:translateX(-7px)}
+ 75%{transform:translateX(7px)}
+}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<div class="card" id="welcome">
+ <h1>🏆 Scan to Earn Your Badge</h1>
+ <p>Welcome, Tech Explorer!</p>
+ <p>Ready to test your technology knowledge?</p>
+ <p>Answer 3 random questions and unlock your achievement badge.</p>
+ <p>🥉 Bronze &nbsp; 🥈 Silver &nbsp; 🥇 Gold</p>
+ <button onclick="startQuiz()">Start Challenge 🚀</button>
+</div>
+
+<div class="card hidden" id="quiz">
+ <p id="progress">Question 1 of 3</p>
+ <h2 id="question"></h2>
+ <div id="options"></div>
+ <p id="feedback"></p>
+ <button id="nextBtn" class="hidden" onclick="nextQuestion()">Next Question →</button>
+</div>
+
+<div class="card hidden" id="result">
+ <h1 id="resultTitle">Challenge Complete!</h1>
+ <div class="badge" id="badge"></div>
+ <h2 id="badgeName"></h2>
+ <p id="score"></p>
+ <p id="message"></p>
+ <button onclick="startQuiz()">Play Again 🔄</button>
+ <br>
+ <button onclick="visitPortfolio()">Visit My Portfolio 🌐</button>
+</div>
+
+<script>
+// Add your portfolio website link here later.
+const PORTFOLIO_URL = "https://punitha132.github.io/Interactive-Digital-Profile/";
+
+const questions = [
+{q:"What does HTML stand for?",o:["Hyper Text Markup Language","High Text Machine Language","Hyper Tool Multi Language","Home Text Markup Language"],a:0,h:"HTML is the standard language used to structure web pages."},
+{q:"Which language is mainly used for styling web pages?",o:["Python","CSS","SQL","Java"],a:1,h:"It controls colors, fonts, spacing and layout."},
+{q:"Which language adds interactivity to websites?",o:["HTML","SQL","JavaScript","CSS"],a:2,h:"It runs in the browser and makes pages interactive."},
+{q:"What does CPU stand for?",o:["Central Processing Unit","Computer Power Unit","Central Program Utility","Control Processing User"],a:0,h:"It is often called the brain of a computer."},
+{q:"Which one is an operating system?",o:["Python","Windows","Google Chrome","HTML"],a:1,h:"It manages computer hardware and software."},
+{q:"What does AI stand for?",o:["Automated Internet","Artificial Intelligence","Advanced Interface","Applied Information"],a:1,h:"It enables machines to perform tasks associated with human intelligence."},
+{q:"What is machine learning?",o:["A type of printer","A programming keyboard","A branch of AI that learns from data","A computer virus"],a:2,h:"It helps systems learn patterns from data."},
+{q:"Which language is popular for AI and machine learning?",o:["Python","HTML","CSS","XML"],a:0,h:"It is known for its simple syntax and many ML libraries."},
+{q:"Which Python library is commonly used for data analysis?",o:["Pandas","Django","Flask","Pygame"],a:0,h:"It provides DataFrame tools for working with data."},
+{q:"Which library is commonly used for numerical computing in Python?",o:["BeautifulSoup","NumPy","Tkinter","Selenium"],a:1,h:"Its name refers to numerical Python."},
+{q:"What is a dataset?",o:["A computer screen","A collection of related data","A programming language","A network cable"],a:1,h:"It is a collection of information used for analysis."},
+{q:"What does CSV stand for?",o:["Computer Saved Values","Comma-Separated Values","Common System Variables","Code Storage Version"],a:1,h:"This file format separates values using commas."},
+{q:"Which Python keyword defines a function?",o:["func","define","def","function"],a:2,h:"It is a three-letter Python keyword."},
+{q:"Which symbol starts a comment in Python?",o:["//","#","<!--","**"],a:1,h:"Python uses this symbol for a single-line comment."},
+{q:"Which data type stores True or False?",o:["String","Integer","Boolean","Float"],a:2,h:"It has only two logical values."},
+{q:"Which Python structure stores key-value pairs?",o:["List","Tuple","Set","Dictionary"],a:3,h:"Think of a structure with keys and their matching values."},
+{q:"What is the output of 2 + 3 in Python?",o:["23","5","6","Error"],a:1,h:"The plus sign performs addition on numbers."},
+{q:"Which keyword is used for a loop over a sequence in Python?",o:["repeat","for","loop","each"],a:1,h:"It is commonly used with lists and ranges."},
+{q:"What does IDE stand for?",o:["Integrated Development Environment","Internet Data Engine","Internal Design Element","Input Device Editor"],a:0,h:"It is software that helps developers write and test code."},
+{q:"Which of these is a Python IDE?",o:["Anaconda Spyder","PowerPoint","Paint","Calculator"],a:0,h:"It is commonly included in the Anaconda distribution."},
+{q:"What is supervised learning?",o:["Learning without data","Learning using labelled data","Learning by deleting data","Learning only from images"],a:1,h:"The training data includes the correct answers or labels."},
+{q:"Which task is an example of classification?",o:["Predicting house price","Grouping customers by similarity","Identifying an email as spam or not spam","Calculating average temperature"],a:2,h:"The model chooses between categories."},
+{q:"Which task is an example of regression?",o:["Predicting a house price","Detecting spam categories","Recognizing a cat","Sorting names alphabetically"],a:0,h:"It predicts a continuous numerical value."},
+{q:"Which algorithm is used for classification and regression?",o:["Random Forest","HTML","Bubble Sort","DNS"],a:0,h:"It combines predictions from many decision trees."},
+{q:"What is a feature in machine learning?",o:["A model's name","An input variable used for prediction","A computer brand","A final certificate"],a:1,h:"Features are the information supplied to a model."},
+{q:"What is a target variable?",o:["The output a model predicts","The computer's password","A website design","A programming editor"],a:0,h:"It is the value the model is trained to predict."},
+{q:"Why do we split data into training and testing sets?",o:["To delete data","To evaluate performance on unseen data","To make files smaller","To change the language"],a:1,h:"One portion trains the model; another checks it."},
+{q:"What does model accuracy measure?",o:["The model's file size","The proportion of correct predictions","The computer's speed","The number of features"],a:1,h:"It compares correct predictions with total predictions."},
+{q:"Which library provides train_test_split?",o:["Scikit-learn","Matplotlib","Pandas","Requests"],a:0,h:"It is a popular Python machine-learning library."},
+{q:"Which library is often used to create charts in Python?",o:["Matplotlib","Flask","OpenCV","Pytest"],a:0,h:"It is widely used for plotting graphs."},
+{q:"What is deep learning?",o:["A type of database","Machine learning using multi-layer neural networks","A web browser","A file format"],a:1,h:"It uses neural networks with multiple layers."},
+{q:"What is a neural network inspired by?",o:["The human brain","A printer","A keyboard","A database table"],a:0,h:"Its design is loosely inspired by biological neurons."},
+{q:"What does NLP stand for in AI?",o:["Natural Language Processing","Network Link Program","Numeric Logic Process","New Learning Platform"],a:0,h:"It helps computers work with human language."},
+{q:"Which is an example of generative AI?",o:["A calculator","A tool that creates text or images","A USB cable","A file manager"],a:1,h:"It produces new content based on learned patterns."},
+{q:"What is a chatbot?",o:["A computer part","A program that communicates with users","A database backup","A type of monitor"],a:1,h:"It interacts with people through conversation."},
+{q:"What does API stand for?",o:["Application Programming Interface","Automated Program Internet","Applied Processing Input","Application Power Integration"],a:0,h:"It allows software applications to communicate."},
+{q:"What is a database?",o:["An organized collection of data","A computer virus","A web design tool","A type of monitor"],a:0,h:"It stores information in an organized way."},
+{q:"What does SQL stand for?",o:["Simple Question Language","Structured Query Language","System Quality Logic","Standard Quick Link"],a:1,h:"It is used to work with relational databases."},
+{q:"Which SQL command retrieves data?",o:["DELETE","UPDATE","SELECT","DROP"],a:2,h:"It is used to read records from a table."},
+{q:"Which SQL command adds new records?",o:["INSERT","SELECT","DROP","ALTER"],a:0,h:"It adds rows to a database table."},
+{q:"What is a primary key?",o:["A table's color","A unique identifier for each record","A password hint","A database logo"],a:1,h:"It uniquely identifies each row in a table."},
+{q:"What is a foreign key?",o:["A key from another country","A field that links related tables","A computer password","A duplicate file"],a:1,h:"It creates a relationship between tables."},
+{q:"What is a row in a database table?",o:["A record","A database server","A column heading","A query language"],a:0,h:"It contains the values for one record."},
+{q:"What is a column in a database table?",o:["A record","A field or attribute","A database backup","A website link"],a:1,h:"It represents one type of information."},
+{q:"What does DBMS stand for?",o:["Database Management System","Digital Base Machine Software","Data Backup Main Server","Database Model Search"],a:0,h:"It is software for managing databases."},
+{q:"Which is a relational database?",o:["MySQL","Photoshop","PowerPoint","Notepad"],a:0,h:"It stores data in related tables."},
+{q:"What is cloud computing?",o:["Storing files only on paper","Using computing services over the internet","Repairing a keyboard","Writing offline notes"],a:1,h:"It provides services such as storage and servers online."},
+{q:"What does URL stand for?",o:["Uniform Resource Locator","Universal Record Link","User Reference List","Unified Routing Language"],a:0,h:"It is the address of a resource on the web."},
+{q:"What does HTTP stand for?",o:["HyperText Transfer Protocol","High Transfer Text Program","Hyperlink Tracking Tool Process","Host Text Transfer Page"],a:0,h:"It is a protocol used for web communication."},
+{q:"What does HTTPS add to HTTP?",o:["More screen brightness","Encryption for secure communication","A larger keyboard","Offline access"],a:1,h:"The extra S indicates a secure connection using encryption."},
+{q:"What is a web browser?",o:["A tool for viewing websites","A database table","A programming variable","A computer cable"],a:0,h:"Examples include Chrome and Firefox."},
+{q:"Which company developed the Chrome browser?",o:["Microsoft","Google","Apple","IBM"],a:1,h:"It is the company behind Google Search."},
+{q:"What is responsive web design?",o:["A website that adapts to different screen sizes","A website with sound only","A website without images","A website that works offline only"],a:0,h:"It helps a page work on phones, tablets and computers."},
+{q:"What does UI stand for?",o:["User Interface","Universal Internet","User Information","Unified Input"],a:0,h:"It is the visual and interactive part people use."},
+{q:"What does UX stand for?",o:["User Experience","Universal Extension","User Exchange","Unified Example"],a:0,h:"It describes the overall experience of using a product."},
+{q:"What is frontend development?",o:["Building the part users interact with","Managing only computer hardware","Writing database backups","Installing operating systems"],a:0,h:"It focuses on the visible side of a website or app."},
+{q:"What is backend development?",o:["Designing logos","Building server-side logic and data handling","Choosing screen colors","Editing photographs"],a:1,h:"It handles behind-the-scenes application operations."},
+{q:"What is a website homepage?",o:["Usually the main introductory page","A database password","A coding error","A network cable"],a:0,h:"It is commonly the first page visitors see."},
+{q:"Which HTML tag creates a hyperlink?",o:["<img>","<a>","<p>","<table>"],a:1,h:"It is called the anchor tag."},
+{q:"Which HTML tag displays an image?",o:["<image>","<picturefile>","<img>","<src>"],a:2,h:"This tag embeds an image in a web page."},
+{q:"Which CSS property changes text color?",o:["font-size","background","color","padding"],a:2,h:"It is named after the visual property it changes."},
+{q:"Which CSS property controls space inside an element?",o:["margin","padding","border","display"],a:1,h:"It creates space between content and its border."},
+{q:"What does DOM stand for?",o:["Document Object Model","Data Output Mode","Digital Order Method","Document Online Map"],a:0,h:"JavaScript uses it to access and change page elements."},
+{q:"Which JavaScript keyword declares a variable?",o:["var","print","echo","define"],a:0,h:"It is an older JavaScript variable declaration keyword."},
+{q:"Which symbol is used for strict equality in JavaScript?",o:["=","==","===","!="],a:2,h:"It checks value and type."},
+{q:"What is JSON commonly used for?",o:["Storing and exchanging data","Editing videos","Charging a laptop","Designing keyboards"],a:0,h:"It is a lightweight text-based data format."},
+{q:"What is Git?",o:["A version control system","A web browser","A database language","An operating system"],a:0,h:"It tracks changes in files and code."},
+{q:"What is GitHub?",o:["A code hosting and collaboration platform","A programming language","A laptop brand","A search algorithm"],a:0,h:"Developers use it to host and share Git repositories."},
+{q:"What is a repository in Git?",o:["A project folder tracked by Git","A computer screen","A website password","A network address"],a:0,h:"It stores project files and their version history."},
+{q:"Which Git command copies a repository to your computer?",o:["git push","git clone","git commit","git status"],a:1,h:"It makes a local copy of a remote repository."},
+{q:"Which Git command saves a snapshot of changes?",o:["git commit","git pull","git clone","git init"],a:0,h:"It records staged changes in the project history."},
+{q:"What is a branch in Git?",o:["A separate line of development","A type of keyboard","A database password","A website image"],a:0,h:"It lets developers work on changes independently."},
+{q:"What is open-source software?",o:["Software whose source code is available under a license","Software that never needs updates","Software without any users","Software that works only offline"],a:0,h:"People can inspect and, under its license, modify the code."},
+{q:"What is debugging?",o:["Finding and fixing errors in code","Deleting all project files","Designing a logo","Installing a printer"],a:0,h:"It helps identify why a program is not working correctly."},
+{q:"What is an algorithm?",o:["A step-by-step method to solve a problem","A computer screen","A file extension","A type of battery"],a:0,h:"It is a defined sequence of instructions."},
+{q:"What is a flowchart?",o:["A visual representation of a process","A database password","A programming language","A storage device"],a:0,h:"It uses symbols and arrows to show steps."},
+{q:"What is an error in programming?",o:["A problem that causes incorrect or unexpected behavior","A successful output","A website address","A type of keyboard"],a:0,h:"It may stop a program or make it behave incorrectly."},
+{q:"What is cybersecurity?",o:["Protecting systems and data from digital threats","Designing website banners","Making computer screens","Creating spreadsheets"],a:0,h:"It protects computers, networks and information."},
+{q:"What is phishing?",o:["A trick to steal sensitive information","A way to speed up Wi-Fi","A programming method","A data visualization tool"],a:0,h:"It often uses fake emails or websites to deceive people."},
+{q:"What is malware?",o:["Malicious software","A safe browser","A coding framework","A database table"],a:0,h:"It is software designed to harm or misuse devices."},
+{q:"Why should you use a strong password?",o:["To protect accounts from unauthorized access","To make websites colorful","To increase screen size","To speed up typing"],a:0,h:"A strong password makes guessing or breaking access harder."},
+{q:"What is two-factor authentication?",o:["Using two different verification methods","Using two usernames","Opening two browsers","Saving two files"],a:0,h:"It adds another verification step beyond a password."},
+{q:"What is encryption?",o:["Converting information into a protected form","Deleting information permanently","Printing a document","Changing screen brightness"],a:0,h:"It helps prevent unauthorized people from reading data."},
+{q:"What is a firewall?",o:["A security system that filters network traffic","A computer game","A coding language","A storage folder"],a:0,h:"It helps control incoming and outgoing network connections."},
+{q:"What is a computer virus?",o:["A type of malicious program","A hardware component","A web browser","A database"],a:0,h:"It can spread by infecting files or programs."},
+{q:"What does Wi-Fi allow devices to do?",o:["Connect to a network wirelessly","Print without ink","Run without power","Store unlimited files"],a:0,h:"It provides wireless network connectivity."},
+{q:"What is an IP address?",o:["A network address for a device","A computer brand","A programming function","A file type"],a:0,h:"It identifies a device or interface on an IP network."},
+{q:"What does LAN stand for?",o:["Local Area Network","Large Access Number","Linked Application Node","Long Area Name"],a:0,h:"It connects devices within a limited area."},
+{q:"What is a server?",o:["A computer or program that provides services to clients","A computer mouse","A text editor","A type of monitor"],a:0,h:"It responds to requests from other devices or programs."},
+{q:"What is the Internet?",o:["A global network of connected networks","A single website","A computer keyboard","A programming language"],a:0,h:"It connects networks and devices around the world."},
+{q:"What is data visualization?",o:["Presenting data using charts and graphs","Deleting data","Encrypting passwords","Installing software"],a:0,h:"It makes patterns and information easier to understand."},
+{q:"Which chart is commonly used to compare categories?",o:["Bar chart","Scatter plot only","Network map","Flowchart"],a:0,h:"It uses rectangular bars to compare values."},
+{q:"What is big data?",o:["Very large or complex datasets","A large computer monitor","A long password","A small text file"],a:0,h:"Traditional tools may struggle to process it efficiently."},
+{q:"What is data cleaning?",o:["Finding and correcting inaccurate or incomplete data","Deleting the whole dataset","Changing a computer screen","Writing a website title"],a:0,h:"It improves data quality before analysis."},
+{q:"What is an outlier in data?",o:["A value unusually far from other observations","The average value","A column name","A database password"],a:0,h:"It is an observation that differs notably from the rest."},
+{q:"What is automation?",o:["Using technology to perform tasks with less manual effort","Turning off a computer","Drawing a chart by hand","Changing a file name"],a:0,h:"It allows repetitive tasks to be performed automatically."},
+{q:"What is the Internet of Things (IoT)?",o:["Connected physical devices that exchange data","A type of website font","A programming error","An image format"],a:0,h:"Think of smart watches and connected home devices."},
+{q:"What is blockchain?",o:["A distributed digital ledger","A photo editor","A web browser","A type of monitor"],a:0,h:"It records information in linked blocks across a network."},
+{q:"What is virtual reality (VR)?",o:["An immersive computer-generated environment","A spreadsheet formula","A database tool","A type of printer"],a:0,h:"It can make users feel present in a simulated world."},
+{q:"What is augmented reality (AR)?",o:["Adding digital elements to the real-world view","Replacing the Internet","Deleting digital images","A computer operating system"],a:0,h:"It overlays digital content onto what you see around you."},
+{q:"What is a QR code?",o:["A scannable code that stores information","A programming language","A computer virus","A type of keyboard"],a:0,h:"Phones can scan it to open a link or read data."}
+];
+
+let selectedQuestions = [];
+let current = 0;
+let points = 0;
+let answered = false;
+
+function startQuiz(){
+ selectedQuestions = [...questions].sort(()=>Math.random()-0.5).slice(0,3);
+ current = 0;
+ points = 0;
+ document.getElementById("welcome").classList.add("hidden");
+ document.getElementById("result").classList.add("hidden");
+ document.getElementById("quiz").classList.remove("hidden");
+ showQuestion();
+}
+
+function showQuestion(){
+ answered = false;
+ const item = selectedQuestions[current];
+ document.getElementById("progress").textContent = `Question ${current+1} of 3`;
+ document.getElementById("question").textContent = item.q;
+ document.getElementById("feedback").textContent = "";
+ document.getElementById("nextBtn").classList.add("hidden");
+ const area = document.getElementById("options");
+ area.innerHTML = "";
+
+ item.o.forEach((choice,index)=>{
+  const btn = document.createElement("button");
+  btn.className = "option";
+  btn.textContent = String.fromCharCode(65+index)+". "+choice;
+  btn.onclick = ()=>checkAnswer(index,btn);
+  area.appendChild(btn);
+ });
+}
+
+function checkAnswer(index,button){
+ if(answered) return;
+ answered = true;
+ const item = selectedQuestions[current];
+ const all = document.querySelectorAll(".option");
+ all.forEach(btn=>btn.disabled=true);
+
+ if(index===item.a){
+  points++;
+  button.classList.add("correct");
+  document.getElementById("feedback").textContent = "✨ Correct answer! Well done!";
+ }else{
+  button.classList.add("wrong");
+  all[item.a].classList.add("correct");
+  document.getElementById("quiz").classList.add("shake");
+  setTimeout(()=>document.getElementById("quiz").classList.remove("shake"),400);
+  document.getElementById("feedback").textContent =
+   "Not quite! 💡 Hint: "+item.h;
+ }
+ document.getElementById("nextBtn").textContent =
+  current===2 ? "See My Result 🏆" : "Next Question →";
+ document.getElementById("nextBtn").classList.remove("hidden");
+}
+
+function nextQuestion(){
+ current++;
+ if(current<3){
+  showQuestion();
+ }else{
+  showResult();
+ }
+}
+
+function showResult(){
+ document.getElementById("quiz").classList.add("hidden");
+ document.getElementById("result").classList.remove("hidden");
+
+ let name, symbol, style, message;
+ if(points===3){
+  name="Gold Tech Explorer";
+  symbol="🥇";
+  style="gold";
+  message="Amazing! You mastered all 3 questions!";
+ }else if(points===2){
+  name="Silver Tech Explorer";
+  symbol="🥈";
+  style="silver";
+  message="Great work! You're building strong tech knowledge.";
+ }else if(points===1){
+  name="Bronze Tech Explorer";
+  symbol="🥉";
+  style="bronze";
+  message="Good start! Keep learning and growing.";
+ }else{
+  name="Keep Exploring!";
+  symbol="💪";
+  style="";
+  message="Better luck next time! Every attempt is a chance to learn.";
+ }
+
+ document.getElementById("badge").textContent=symbol;
+ document.getElementById("badge").className="badge "+style;
+ document.getElementById("badgeName").textContent=name;
+ document.getElementById("score").textContent=`Your Score: ${points} / 3`;
+ document.getElementById("message").textContent=message;
+ document.getElementById("resultTitle").textContent=
+  points===0 ? "Challenge Complete!" : "Congratulations!";
+}
+
+function visitPortfolio(){
+ if(PORTFOLIO_URL==="PASTE_YOUR_PORTFOLIO_URL_HERE"){
+  alert("Your portfolio link will be added before publishing!");
+  return;
+ }
+ window.open(PORTFOLIO_URL,"_blank");
+}
+</script>
+</body>
+</html>
